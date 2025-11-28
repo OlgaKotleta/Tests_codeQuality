@@ -1,6 +1,4 @@
 from bot.handlers.handler import Handler, HandlerStatus
-from bot.domain.storage import Storage
-from bot.domain.messenger import Messenger
 
 
 class DatabaseHandler(Handler):
@@ -9,8 +7,8 @@ class DatabaseHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage: Storage,
-        messenger: Messenger,
+        storage,
+        messenger,
     ) -> bool:
         return True
 
@@ -19,9 +17,9 @@ class DatabaseHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage: Storage,
-        messenger: Messenger,
+        storage,
+        messenger,
     ) -> HandlerStatus:
         print(f"💾 Saving update to database: {update.get('update_id', 'unknown')}")
-        storage.persist_updates([update])
+        storage.persist_update(update)
         return HandlerStatus.CONTINUE

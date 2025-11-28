@@ -1,6 +1,4 @@
 import json
-from bot.domain.storage import Storage
-from bot.domain.messenger import Messenger
 from bot.handlers.handler import Handler, HandlerStatus
 
 
@@ -10,8 +8,8 @@ class MessageStart(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage: Storage,
-        messenger: Messenger,
+        storage,
+        messenger,
     ) -> bool:
         return (
             "message" in update
@@ -24,21 +22,21 @@ class MessageStart(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage: Storage,
-        messenger: Messenger,
+        storage,
+        messenger,
     ) -> HandlerStatus:
         telegram_id = update["message"]["from"]["id"]
 
-        storage.clear_user_order_json(telegram_id)
+        storage.clear_user_state_and_order(telegram_id)
         storage.update_user_state(telegram_id, "WAIT_FOR_PIZZA_NAME")
 
-        messenger.send_message(
+        messenger.sendMessage(
             chat_id=update["message"]["chat"]["id"],
             text="Welcome to Pizza shop!",
             reply_markup=json.dumps({"remove_keyboard": True}),
         )
 
-        messenger.send_message(
+        messenger.sendMessage(
             chat_id=update["message"]["chat"]["id"],
             text="Please choose pizza type",
             reply_markup=json.dumps(

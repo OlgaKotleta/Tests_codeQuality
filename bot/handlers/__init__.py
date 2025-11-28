@@ -1,4 +1,4 @@
-from bot.handlers.handler import Handler
+from bot.handlers.handler import Handler as Handler
 from bot.handlers.database_handler import DatabaseHandler
 from bot.handlers.ensure_users_exists import EnsureUserExists
 from bot.handlers.message_start import MessageStart
@@ -9,7 +9,7 @@ from bot.handlers.order_confirmation import OrderConfirmationHandler
 from bot.handlers.continue_order import ContinueOrderHandler
 
 
-def get_handlers() -> list[Handler]:
+def get_handlers():
     return [
         DatabaseHandler(),
         EnsureUserExists(),

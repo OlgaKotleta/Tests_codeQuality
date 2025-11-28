@@ -26,12 +26,12 @@ def test_database_handler_execution():
         },
     }
 
-    persist_updates_called = False
+    persist_update_called = False
 
-    def persist_updates(updates: list) -> None:
-        nonlocal persist_updates_called
-        persist_updates_called = True
-        assert updates == [test_update]
+    def persist_update(update: dict) -> None:
+        nonlocal persist_update_called
+        persist_update_called = True
+        assert update == test_update
 
     def get_user(telegram_id: int) -> dict | None:
         assert telegram_id == 12345
@@ -39,7 +39,7 @@ def test_database_handler_execution():
 
     mock_storage = Mock(
         {
-            "persist_updates": persist_updates,
+            "persist_update": persist_update,
             "get_user": get_user,
         }
     )
@@ -47,7 +47,7 @@ def test_database_handler_execution():
 
     dispatcher = Dispatcher(mock_storage, mock_messenger)
     update_logger = DatabaseHandler()
-    dispatcher.add_handler(update_logger)
+    dispatcher.add_handlers(update_logger)
     dispatcher.dispatch(test_update)
 
-    assert persist_updates_called
+    assert persist_update_called

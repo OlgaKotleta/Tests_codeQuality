@@ -9,10 +9,11 @@ from bot.infrastructure.storage_sqlite import StorageSqlite
 if __name__ == "__main__":
     try:
         storage: Storage = StorageSqlite()
-        messenger: Messenger = MessengerTelegram
+        messenger: Messenger = MessengerTelegram()
 
         dispatcher = Dispatcher(storage, messenger)
-        dispatcher.add_handler(*get_handlers)
+        handlers = get_handlers()
+        dispatcher.add_handlers(*handlers)
         bot.long_polling.start_long_polling(dispatcher, messenger)
     except KeyboardInterrupt:
         print("\nBot stopped")

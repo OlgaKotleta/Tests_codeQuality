@@ -34,20 +34,20 @@ class MessengerTelegram(Messenger):
             assert response_json["ok"]
             return response_json["result"]
 
-    def send_message(self, chat_id: int, text: str, **kwargs) -> dict:
+    def sendMessage(self, chat_id: int, text: str, **kwargs) -> dict:
         return self._make_request("sendMessage", chat_id=chat_id, text=text, **kwargs)
 
-    def get_updates(self, **kwargs) -> dict:
+    def getUpdates(self, **kwargs) -> dict:
         return self._make_request("getUpdates", **kwargs)
 
-    def answer_callback_query(self, callback_query_id: str, **kwargs) -> dict:
+    def answerCallbackQuery(self, callback_query_id: str, **kwargs) -> dict:
         return self._make_request(
             "answerCallbackQuery",
             callback_query_id=callback_query_id,
             **kwargs,
         )
 
-    def delete_message(self, chat_id: int, message_id: int):
+    def deleteMessage(self, chat_id: int, message_id: int):
         return self._make_request(
             "deleteMessage",
             chat_id=chat_id,

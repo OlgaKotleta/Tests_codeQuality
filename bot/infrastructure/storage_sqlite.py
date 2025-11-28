@@ -61,7 +61,7 @@ class StorageSqlite(Storage):
                     "INSERT INTO telegram_updates (payload) VALUES (?)", (payload,)
                 )
 
-    def ensure_user_exists(telegram_id: int) -> None:
+    def ensure_user_exists(self, telegram_id: int) -> None:
         """Ensure a user with the given telegram_id exists in the users table."""
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             cursor = connection.execute(
@@ -75,7 +75,7 @@ class StorageSqlite(Storage):
             else:
                 print(f"👤 User already exists: {telegram_id}")
 
-    def get_user(telegram_id: int) -> dict:
+    def get_user(self, telegram_id: int) -> dict:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             with connection:
                 cursor = connection.execute(
@@ -93,7 +93,7 @@ class StorageSqlite(Storage):
                     }
                 return None
 
-    def clear_user_state_and_order(telegram_id: int) -> None:
+    def clear_user_state_and_order(self, telegram_id: int) -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             with connection:
                 connection.execute(
@@ -101,7 +101,7 @@ class StorageSqlite(Storage):
                     (telegram_id,),
                 )
 
-    def update_user_state(telegram_id: int, state: str) -> None:
+    def update_user_state(self, telegram_id: int, state: str) -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             connection.execute(
                 "Update users SET state = ? WHERE telegram_id = ?", (state, telegram_id)
@@ -115,14 +115,14 @@ class StorageSqlite(Storage):
                     (json.dumps(order_json, ensure_ascii=False), telegram_id),
                 )
 
-    def save_order_to_history(telegram_id: int, order_data: dict) -> None:
+    def save_order_to_history(self, telegram_id: int, order_data: dict) -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             connection.execute(
                 "INSERT INTO order_history (telegram_id, order_data) VALUES (?, ?)",
                 (telegram_id, json.dumps(order_data, ensure_ascii=False)),
             )
 
-    def get_user_order_history(telegram_id: int) -> list:
+    def get_user_order_history(self, telegram_id: int) -> list:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             cursor = connection.execute(
                 "SELECT order_data, created_at FROM order_history WHERE telegram_id = ? ORDER BY created_at DESC",
@@ -138,9 +138,19 @@ class StorageSqlite(Storage):
                     continue
             return history
 
-    def clear_current_order(telegram_id: int) -> None:
+    def clear_current_order(self, telegram_id: int) -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             connection.execute(
                 "UPDATE users SET state = NULL, order_json = NULL WHERE telegram_id = ?",
+                (telegram_id,),
+            )
+
+    def persist_update(self, update: dict) -> None:
+        self.persist_updates([update])
+
+    def clear_user_order_json(self, telegram_id: int) -> None:
+        with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
+            connection.execute(
+                "UPDATE users SET order_json = NULL WHERE telegram_id = ?",
                 (telegram_id,),
             )

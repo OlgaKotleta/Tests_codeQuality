@@ -14,7 +14,7 @@ class Dispatcher:
     def unused_method(self) -> None:
         return None
 
-    def add_handler(self, *handlers: Handler) -> None:
+    def add_handlers(self, *handlers: Handler) -> None:
         for handler in handlers:
             self._handlers.append(handler)
 
