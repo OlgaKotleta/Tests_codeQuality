@@ -12,7 +12,7 @@ def test_database_handler_execution():
             "from": {
                 "id": 12345,
                 "is_bot": False,
-                "first_name": "Test",  
+                "first_name": "Test",
                 "username": "testuser",
             },
             "chat": {

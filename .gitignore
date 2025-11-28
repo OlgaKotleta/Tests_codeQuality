@@ -3,11 +3,15 @@
 venv/
 env/
 
-# Python cache
+# Cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
+.pytest_cache/
+.ruff_cache/
+
+
 
 # Database
 *.sqlite
@@ -16,11 +20,5 @@ __pycache__/
 # Environment variables
 .env
 
-# Editor files
-.vscode/
-.idea/
-*.swp
-*.swo
 
-# Logs
-*.log
+
