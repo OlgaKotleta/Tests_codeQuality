@@ -8,6 +8,7 @@ from bot.handlers.drink_selection import DrinkSelectionHandler
 from bot.handlers.order_confirmation import OrderConfirmationHandler
 from bot.handlers.continue_order import ContinueOrderHandler
 
+
 def get_handlers() -> list[Handler]:
     return [
         DatabaseHandler(),
@@ -17,5 +18,5 @@ def get_handlers() -> list[Handler]:
         PizzaSizeHandler(),
         DrinkSelectionHandler(),
         OrderConfirmationHandler(),
-        ContinueOrderHandler(),  
+        ContinueOrderHandler(),
     ]

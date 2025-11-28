@@ -3,17 +3,18 @@ import bot.telegram_client
 import bot.database_client
 from bot.handlers.handler import Handler, HandlerStatus
 
+
 class PizzaSizeHandler(Handler):
     def can_handle(self, update, state, order_json) -> bool:
         if "callback_query" not in update:
             return False
-    
+
         if state != "WAIT_FOR_PIZZA_SIZE":
             return False
-        
+
         callback_data = update["callback_query"]["data"]
         return callback_data.startswith("size_")
-    
+
     def handle(self, update, state, order_json) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         callback_data = update["callback_query"]["data"]
@@ -27,7 +28,7 @@ class PizzaSizeHandler(Handler):
 
         pizza_size = size_mapping.get(callback_data)
         order_json["pizza_size"] = pizza_size
-        
+
         bot.database_client.update_user_order_json(telegram_id, order_json)
         bot.database_client.update_user_state(telegram_id, "WAIT_FOR_DRINKS")
 
@@ -37,7 +38,7 @@ class PizzaSizeHandler(Handler):
 
         bot.telegram_client.deleteMessage(
             chat_id=update["callback_query"]["message"]["chat"]["id"],
-            message_id=update["callback_query"]["message"]["message_id"]
+            message_id=update["callback_query"]["message"]["message_id"],
         )
 
         bot.telegram_client.sendMessage(
@@ -62,5 +63,5 @@ class PizzaSizeHandler(Handler):
                 }
             ),
         )
-        
+
         return HandlerStatus.STOP

@@ -1,10 +1,18 @@
-from bot.handlers.handler import Handler, HandlerStatus
 import json
-import bot.database_client
+
+from bot.handlers.handler import Handler, HandlerStatus
+from bot.domain.storage import Storage
+from bot.domain.messenger import Messenger
+
 
 class Dispatcher:
-    def __init__(self):
+    def __init__(self, storage: Storage, messenger: Messenger) -> None:
         self._handlers: list[Handler] = []
+        self._storage: Storage = storage
+        self._messenger: Messenger = messenger
+
+    def unused_method(self) -> None:
+        return None
 
     def add_handler(self, *handlers: Handler) -> None:
         for handler in handlers:
@@ -19,21 +27,30 @@ class Dispatcher:
 
     def dispatch(self, update: dict) -> None:
         telegram_id = self._get_telegram_id_from_update(update)
-        
-        if telegram_id:
-            bot.database_client.ensure_user_exists(telegram_id)
-        
-        user = bot.database_client.get_user(telegram_id) if telegram_id else None
+        user = self._storage.get_user(telegram_id) if telegram_id else None
+
         user_state = user.get("state") if user else None
 
         order_json_str = user["order_json"] if user and user["order_json"] else "{}"
         try:
-            order_json = json.loads(order_json_str)  
+            order_json = json.loads(order_json_str)
         except json.JSONDecodeError:
             order_json = {}
 
         for handler in self._handlers:
-            if handler.can_handle(update, user_state, order_json): 
-                status = handler.handle(update, user_state, order_json)  
+            if handler.can_handle(
+                update,
+                user_state,
+                order_json,
+                self._storage,
+                self._messenger,
+            ):
+                status = handler.handle(
+                    update,
+                    user_state,
+                    order_json,
+                    self._storage,
+                    self._messenger,
+                )
                 if status == HandlerStatus.STOP:
                     break

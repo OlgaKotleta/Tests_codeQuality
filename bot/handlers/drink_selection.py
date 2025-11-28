@@ -3,17 +3,18 @@ import bot.telegram_client
 import bot.database_client
 from bot.handlers.handler import Handler, HandlerStatus
 
+
 class DrinkSelectionHandler(Handler):
     def can_handle(self, update, state, order_json) -> bool:
         if "callback_query" not in update:
             return False
-    
+
         if state != "WAIT_FOR_DRINKS":
             return False
-        
+
         callback_data = update["callback_query"]["data"]
         return callback_data.startswith("drink_")
-    
+
     def handle(self, update, state, order_json) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         callback_data = update["callback_query"]["data"]
@@ -29,7 +30,7 @@ class DrinkSelectionHandler(Handler):
 
         drink = drink_mapping.get(callback_data)
         order_json["drink"] = drink
-        
+
         bot.database_client.update_user_order_json(telegram_id, order_json)
         bot.database_client.update_user_state(telegram_id, "WAIT_FOR_CONFIRMATION")
 
@@ -39,10 +40,10 @@ class DrinkSelectionHandler(Handler):
 
         bot.telegram_client.deleteMessage(
             chat_id=update["callback_query"]["message"]["chat"]["id"],
-            message_id=update["callback_query"]["message"]["message_id"]
+            message_id=update["callback_query"]["message"]["message_id"],
         )
         order_summary = self._format_order_summary(order_json)
-        
+
         bot.telegram_client.sendMessage(
             chat_id=update["callback_query"]["message"]["chat"]["id"],
             text=f"📋 Your order:\n{order_summary}\n\nPlease confirm your order:",
@@ -50,7 +51,10 @@ class DrinkSelectionHandler(Handler):
                 {
                     "inline_keyboard": [
                         [
-                            {"text": "✅ Confirm Order", "callback_data": "confirm_yes"},
+                            {
+                                "text": "✅ Confirm Order",
+                                "callback_data": "confirm_yes",
+                            },
                             {"text": "❌ Cancel", "callback_data": "confirm_no"},
                         ]
                     ],
@@ -58,7 +62,7 @@ class DrinkSelectionHandler(Handler):
             ),
         )
         return HandlerStatus.STOP
-    
+
     def _format_order_summary(self, order_json: dict) -> str:
         summary = []
         if order_json.get("pizza_name"):
