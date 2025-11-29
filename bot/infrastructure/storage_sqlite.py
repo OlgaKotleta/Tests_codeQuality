@@ -10,7 +10,7 @@ load_dotenv()
 
 
 class StorageSqlite(Storage):
-    def recreate_database(self) -> None:
+    def recreate_database() -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
             with connection:
                 connection.execute("DROP TABLE IF EXISTS telegram_updates")
@@ -51,7 +51,6 @@ class StorageSqlite(Storage):
                     )
                     """
                 )
-            connection.close()
 
     def persist_updates(self, update: dict) -> None:
         payload = json.dumps(update, ensure_ascii=False, indent=2)
@@ -100,12 +99,6 @@ class StorageSqlite(Storage):
                     "Update users SET state = NULL, order_json = NULL WHERE telegram_id = ?",
                     (telegram_id,),
                 )
-
-    def update_user_state(self, telegram_id: int, state: str) -> None:
-        with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
-            connection.execute(
-                "Update users SET state = ? WHERE telegram_id = ?", (state, telegram_id)
-            )
 
     def update_user_order_json(self, telegram_id: int, order_json: dict) -> None:
         with sqlite3.connect(os.getenv("SQLITE_DATABASE_PATH")) as connection:
