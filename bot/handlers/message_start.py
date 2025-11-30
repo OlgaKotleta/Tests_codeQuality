@@ -1,11 +1,15 @@
 import json
+import logging
+import time
 from bot.handlers.handler import Handler, HandlerStatus
 from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
+logger = logging.getLogger(__name__)
+
 
 class MessageStart(Handler):
-    def can_handle(
+    async def can_handle(
         self,
         update: dict,
         state: str,
@@ -19,7 +23,7 @@ class MessageStart(Handler):
             and update["message"]["text"] == "/start"
         )
 
-    def handle(
+    async def handle(
         self,
         update: dict,
         state: str,
@@ -27,18 +31,21 @@ class MessageStart(Handler):
         storage: Storage,
         messenger: Messenger,
     ) -> HandlerStatus:
+        start_time = time.time()
         telegram_id = update["message"]["from"]["id"]
 
-        storage.clear_user_state_and_order(telegram_id)
-        storage.update_user_state(telegram_id, "WAIT_FOR_PIZZA_NAME")
+        logger.info(f"[START] → Processing /start command: {telegram_id}")
 
-        messenger.sendMessage(
+        await storage.clear_user_state_and_order(telegram_id)
+        await storage.update_user_state(telegram_id, "WAIT_FOR_PIZZA_NAME")
+
+        await messenger.sendMessage(
             chat_id=update["message"]["chat"]["id"],
             text="Welcome to Pizza shop!",
             reply_markup=json.dumps({"remove_keyboard": True}),
         )
 
-        messenger.sendMessage(
+        await messenger.sendMessage(
             chat_id=update["message"]["chat"]["id"],
             text="Please choose pizza type",
             reply_markup=json.dumps(
@@ -66,4 +73,8 @@ class MessageStart(Handler):
                 }
             ),
         )
+
+        duration_ms = (time.time() - start_time) * 1000
+        logger.info(f"[START] ← /start completed - {duration_ms:.2f}ms")
+
         return HandlerStatus.STOP

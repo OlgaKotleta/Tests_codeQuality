@@ -1,11 +1,12 @@
 import json
+import asyncio
 from bot.handlers.handler import Handler, HandlerStatus
 from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
 
 class OrderConfirmationHandler(Handler):
-    def can_handle(
+    async def can_handle(
         self,
         update: dict,
         state: str,
@@ -22,7 +23,7 @@ class OrderConfirmationHandler(Handler):
         callback_data = update["callback_query"]["data"]
         return callback_data.startswith("confirm_")
 
-    def handle(
+    async def handle(
         self,
         update: dict,
         state: str,
@@ -33,26 +34,30 @@ class OrderConfirmationHandler(Handler):
         telegram_id = update["callback_query"]["from"]["id"]
         callback_data = update["callback_query"]["data"]
 
-        messenger.answerCallbackQuery(callback_query_id=update["callback_query"]["id"])
-
-        messenger.deleteMessage(
-            chat_id=update["callback_query"]["message"]["chat"]["id"],
-            message_id=update["callback_query"]["message"]["message_id"],
+        await asyncio.gather(
+            messenger.answerCallbackQuery(
+                callback_query_id=update["callback_query"]["id"]
+            ),
+            messenger.deleteMessage(
+                chat_id=update["callback_query"]["message"]["chat"]["id"],
+                message_id=update["callback_query"]["message"]["message_id"],
+            ),
         )
 
         if callback_data == "confirm_yes":
-            storage.save_order_to_history(telegram_id, order_json)
+            await storage.save_order_to_history(telegram_id, order_json)
 
             order_summary = self._format_order_summary(order_json)
 
-            messenger.sendMessage(
-                chat_id=update["callback_query"]["message"]["chat"]["id"],
-                text=f"✅ Order confirmed!\n\n{order_summary}\n\nThank you for your order! 🎉",
+            await asyncio.gather(
+                messenger.sendMessage(
+                    chat_id=update["callback_query"]["message"]["chat"]["id"],
+                    text=f"✅ Order confirmed!\n\n{order_summary}\n\nThank you for your order! 🎉",
+                ),
+                storage.update_user_state(telegram_id, "ORDER_COMPLETED"),
             )
 
-            storage.update_user_state(telegram_id, "ORDER_COMPLETED")
-
-            messenger.sendMessage(
+            await messenger.sendMessage(
                 chat_id=update["callback_query"]["message"]["chat"]["id"],
                 text="What would you like to do next?",
                 reply_markup=json.dumps(
@@ -70,11 +75,13 @@ class OrderConfirmationHandler(Handler):
                 ),
             )
         else:
-            messenger.sendMessage(
-                chat_id=update["callback_query"]["message"]["chat"]["id"],
-                text="❌ Order cancelled.\nType /start to begin again.",
+            await asyncio.gather(
+                messenger.sendMessage(
+                    chat_id=update["callback_query"]["message"]["chat"]["id"],
+                    text="❌ Order cancelled.\nType /start to begin again.",
+                ),
+                storage.clear_current_order(telegram_id),
             )
-            storage.clear_current_order(telegram_id)
 
         return HandlerStatus.STOP
 

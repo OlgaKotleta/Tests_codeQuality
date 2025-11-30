@@ -67,7 +67,7 @@ build: buildx-setup
 	  --platform linux/amd64,linux/arm64 \
 	  -t $(BOT_IMAGE) \
 	  -f Dockerfile \
-	  --push .
+	  --load .  # ← ИЗМЕНЕНО: --load вместо --push
 
 build-dev:
 	docker build \
@@ -104,7 +104,6 @@ clean-all: clean
 	docker system prune -f
 	docker volume rm $(POSTGRES_VOLUME) || true
 
-
 status:
 	@echo "=== Containers ==="
 	docker ps -a
@@ -113,6 +112,5 @@ status:
 	@echo "=== Buildx ==="
 	docker buildx ls
 
-
-deploy: build
+deploy: build push
 	@echo "✅ Multi-platform image built and pushed to Docker Hub"

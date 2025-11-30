@@ -1,10 +1,11 @@
+import pytest
 from bot.dispatcher import Dispatcher
 from bot.handlers.pizza_selection import PizzaSelectionHandler
-
 from tests.mocks import Mock
 
 
-def test_pizza_selection_handler():
+@pytest.mark.asyncio
+async def test_pizza_selection_handler():
     test_update = {
         "update_id": 12345678,
         "callback_query": {
@@ -32,19 +33,19 @@ def test_pizza_selection_handler():
     update_order_json_called = False
     update_user_state_called = False
 
-    def update_user_order_json(telegram_id: int, order_json: dict) -> None:
+    async def update_user_order_json(telegram_id: int, order_json: dict) -> None:
         assert telegram_id == 12345
         assert order_json["pizza_name"] == "Margherita"
         nonlocal update_order_json_called
         update_order_json_called = True
 
-    def update_user_state(telegram_id: int, state: str) -> None:
+    async def update_user_state(telegram_id: int, state: str) -> None:
         assert telegram_id == 12345
         assert state == "WAIT_FOR_PIZZA_SIZE"
         nonlocal update_user_state_called
         update_user_state_called = True
 
-    def get_user(telegram_id: int) -> dict | None:
+    async def get_user(telegram_id: int) -> dict | None:
         assert telegram_id == 12345
         return {"state": "WAIT_FOR_PIZZA_NAME", "order_json": "{}"}
 
@@ -52,20 +53,20 @@ def test_pizza_selection_handler():
     delete_message_called = False
     send_message_called = False
 
-    def answerCallbackQuery(callback_query_id: str, **kwargs) -> dict:
+    async def answerCallbackQuery(callback_query_id: str, **kwargs) -> dict:
         assert callback_query_id == "callback123"
         nonlocal answer_callback_called
         answer_callback_called = True
         return {"ok": True}
 
-    def deleteMessage(chat_id: int, message_id: int) -> dict:
+    async def deleteMessage(chat_id: int, message_id: int) -> dict:
         assert chat_id == 12345
         assert message_id == 100
         nonlocal delete_message_called
         delete_message_called = True
         return {"ok": True}
 
-    def sendMessage(chat_id: int, text: str, **kwargs) -> dict:
+    async def sendMessage(chat_id: int, text: str, **kwargs) -> dict:
         assert chat_id == 12345
         assert text == "Please select pizza size"
         nonlocal send_message_called
@@ -92,7 +93,7 @@ def test_pizza_selection_handler():
     pizza_handler = PizzaSelectionHandler()
     dispatcher.add_handlers(pizza_handler)
 
-    dispatcher.dispatch(test_update)
+    await dispatcher.dispatch(test_update)
 
     assert update_order_json_called
     assert update_user_state_called

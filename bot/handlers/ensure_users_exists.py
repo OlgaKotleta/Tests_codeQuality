@@ -1,10 +1,14 @@
+import logging
+import time
 from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 from bot.handlers.handler import Handler, HandlerStatus
 
+logger = logging.getLogger(__name__)
 
-class EnsureUserExists(Handler):
-    def can_handle(
+
+class EnsureUsersExists(Handler):
+    async def can_handle(
         self,
         update: dict,
         state: str,
@@ -14,7 +18,7 @@ class EnsureUserExists(Handler):
     ) -> bool:
         return "message" in update and "from" in update["message"]
 
-    def handle(
+    async def handle(
         self,
         update: dict,
         state: str,
@@ -22,8 +26,14 @@ class EnsureUserExists(Handler):
         storage: Storage,
         messenger: Messenger,
     ) -> HandlerStatus:
+        start_time = time.time()
         telegram_id = update["message"]["from"]["id"]
 
-        storage.ensure_user_exists(telegram_id)
+        logger.info(f"[USER] → Ensuring user exists: {telegram_id}")
+
+        await storage.ensure_user_exists(telegram_id)
+
+        duration_ms = (time.time() - start_time) * 1000
+        logger.info(f"[USER] ← User ensured - {duration_ms:.2f}ms")
 
         return HandlerStatus.CONTINUE

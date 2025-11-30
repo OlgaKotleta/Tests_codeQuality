@@ -1,11 +1,12 @@
 import json
+import asyncio
 from bot.handlers.handler import Handler, HandlerStatus
 from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
 
 class DrinkSelectionHandler(Handler):
-    def can_handle(
+    async def can_handle(
         self,
         update: dict,
         state: str,
@@ -22,7 +23,7 @@ class DrinkSelectionHandler(Handler):
         callback_data = update["callback_query"]["data"]
         return callback_data.startswith("drink_")
 
-    def handle(
+    async def handle(
         self,
         update: dict,
         state: str,
@@ -45,35 +46,38 @@ class DrinkSelectionHandler(Handler):
         drink = drink_mapping.get(callback_data)
         order_json["drink"] = drink
 
-        storage.update_user_order_json(telegram_id, order_json)
-        storage.update_user_state(telegram_id, "WAIT_FOR_CONFIRMATION")
-
-        messenger.answerCallbackQuery(callback_query_id=update["callback_query"]["id"])
-
-        messenger.deleteMessage(
-            chat_id=update["callback_query"]["message"]["chat"]["id"],
-            message_id=update["callback_query"]["message"]["message_id"],
-        )
-
-        order_summary = self._format_order_summary(order_json)
-
-        messenger.sendMessage(
-            chat_id=update["callback_query"]["message"]["chat"]["id"],
-            text=f"📋 Your order:\n{order_summary}\n\nPlease confirm your order:",
-            reply_markup=json.dumps(
-                {
-                    "inline_keyboard": [
-                        [
-                            {
-                                "text": "✅ Confirm Order",
-                                "callback_data": "confirm_yes",
-                            },
-                            {"text": "❌ Cancel", "callback_data": "confirm_no"},
-                        ]
-                    ],
-                }
+        await asyncio.gather(
+            storage.update_user_order_json(telegram_id, order_json),
+            storage.update_user_state(telegram_id, "WAIT_FOR_CONFIRMATION"),
+            messenger.answerCallbackQuery(
+                callback_query_id=update["callback_query"]["id"]
             ),
         )
+
+        await asyncio.gather(
+            messenger.deleteMessage(
+                chat_id=update["callback_query"]["message"]["chat"]["id"],
+                message_id=update["callback_query"]["message"]["message_id"],
+            ),
+            messenger.sendMessage(
+                chat_id=update["callback_query"]["message"]["chat"]["id"],
+                text=f"📋 Your order:\n{self._format_order_summary(order_json)}\n\nPlease confirm your order:",
+                reply_markup=json.dumps(
+                    {
+                        "inline_keyboard": [
+                            [
+                                {
+                                    "text": "✅ Confirm Order",
+                                    "callback_data": "confirm_yes",
+                                },
+                                {"text": "❌ Cancel", "callback_data": "confirm_no"},
+                            ]
+                        ],
+                    }
+                ),
+            ),
+        )
+
         return HandlerStatus.STOP
 
     def _format_order_summary(self, order_json):
