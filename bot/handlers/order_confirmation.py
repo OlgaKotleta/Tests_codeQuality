@@ -1,5 +1,8 @@
 import json
 from bot.handlers.handler import Handler, HandlerStatus
+from bot.domain.storage import Storage
+from bot.domain.messenger import Messenger
+
 
 
 class OrderConfirmationHandler(Handler):
@@ -8,8 +11,8 @@ class OrderConfirmationHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage,
-        messenger,
+        storage: Storage,
+        messenger: Messenger,
     ) -> bool:
         if "callback_query" not in update:
             return False
@@ -25,8 +28,8 @@ class OrderConfirmationHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage,
-        messenger,
+        storage: Storage,
+        messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         callback_data = update["callback_query"]["data"]

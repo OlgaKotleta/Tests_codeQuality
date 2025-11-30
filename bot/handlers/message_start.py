@@ -1,5 +1,7 @@
 import json
 from bot.handlers.handler import Handler, HandlerStatus
+from bot.domain.storage import Storage
+from bot.domain.messenger import Messenger
 
 
 class MessageStart(Handler):
@@ -8,8 +10,8 @@ class MessageStart(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage,
-        messenger,
+        storage: Storage,
+        messenger: Messenger,
     ) -> bool:
         return (
             "message" in update
@@ -22,8 +24,8 @@ class MessageStart(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage,
-        messenger,
+        storage: Storage,
+        messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["message"]["from"]["id"]
 
