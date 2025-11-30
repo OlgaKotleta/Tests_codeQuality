@@ -11,14 +11,15 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-
-
 # Database
 *.sqlite
 *.db
 
 # Environment variables
 .env
+.dockerignore
+
+
 
 
 
