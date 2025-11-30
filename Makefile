@@ -32,6 +32,11 @@ BOT_CONTAINER=pizza_bot
 include .env
 export $(shell sed 's/=.*//' .env)
 
+# Initialize Buildx
+buildx-setup:
+	docker buildx create --name multiarch --use || true
+	docker buildx inspect --bootstrap
+
 docker_volume:
 	docker volume create $(POSTGRES_VOLUME) || true
 
@@ -44,7 +49,7 @@ postgres_run: docker_volume docker_net
 	  -e POSTGRES_USER="$(POSTGRES_USER)" \
 	  -e POSTGRES_PASSWORD="$(POSTGRES_PASSWORD)" \
 	  -e POSTGRES_DB="$(POSTGRES_DATABASE)" \
-	  -p "$(POSTGRES_PORT):$(POSTGRES_CONTAINER_PORT)" \
+	  -p "$(POSTGRES_PORT):5432" \
 	  -v $(POSTGRES_VOLUME):/var/lib/postgresql/data \
 	  --health-cmd="pg_isready -U $(POSTGRES_USER)" \
 	  --health-interval=10s \
@@ -54,11 +59,20 @@ postgres_run: docker_volume docker_net
 	  postgres:17
 
 postgres_stop:
-	docker stop $(POSTGRES_CONTAINER)
-	docker rm $(POSTGRES_CONTAINER)
+	docker stop $(POSTGRES_CONTAINER) || true
+	docker rm $(POSTGRES_CONTAINER) || true
 
-build:
-	docker build -t $(BOT_IMAGE) -f Dockerfile .
+build: buildx-setup
+	docker buildx build \
+	  --platform linux/amd64,linux/arm64 \
+	  -t $(BOT_IMAGE) \
+	  -f Dockerfile \
+	  --push .
+
+build-dev:
+	docker build \
+	  -t $(BOT_IMAGE) \
+	  -f Dockerfile .
 
 push:
 	docker push $(BOT_IMAGE)
@@ -68,7 +82,7 @@ run: docker_net
 	  --name $(BOT_CONTAINER) \
 	  --restart unless-stopped \
 	  -e POSTGRES_HOST="$(POSTGRES_CONTAINER)" \
-	  -e POSTGRES_PORT="$(POSTGRES_CONTAINER_PORT)" \
+	  -e POSTGRES_PORT="5432" \
 	  -e POSTGRES_USER="$(POSTGRES_USER)" \
 	  -e POSTGRES_PASSWORD="$(POSTGRES_PASSWORD)" \
 	  -e POSTGRES_DATABASE="$(POSTGRES_DATABASE)" \
@@ -77,8 +91,28 @@ run: docker_net
 	  $(BOT_IMAGE)
 
 stop:
-	docker stop $(BOT_CONTAINER)
-	docker rm $(BOT_CONTAINER)
+	docker stop $(BOT_CONTAINER) || true
+	docker rm $(BOT_CONTAINER) || true
 
 logs:
 	docker logs -f $(BOT_CONTAINER)
+
+clean: stop postgres-stop
+	docker rmi $(BOT_IMAGE) || true
+
+clean-all: clean
+	docker system prune -f
+	docker volume rm $(POSTGRES_VOLUME) || true
+
+
+status:
+	@echo "=== Containers ==="
+	docker ps -a
+	@echo "=== Images ==="
+	docker images | grep $(BOT_IMAGE) || true
+	@echo "=== Buildx ==="
+	docker buildx ls
+
+
+deploy: build
+	@echo "✅ Multi-platform image built and pushed to Docker Hub"
