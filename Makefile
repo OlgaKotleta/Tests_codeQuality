@@ -62,12 +62,12 @@ postgres_stop:
 	docker stop $(POSTGRES_CONTAINER) || true
 	docker rm $(POSTGRES_CONTAINER) || true
 
-build: buildx-setup
+build:
 	docker buildx build \
 	  --platform linux/amd64,linux/arm64 \
 	  -t $(BOT_IMAGE) \
 	  -f Dockerfile \
-	  --load .  # ← ИЗМЕНЕНО: --load вместо --push
+	  --push .
 
 build-dev:
 	docker build \
