@@ -4,7 +4,6 @@ from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
 
-
 class PizzaSizeHandler(Handler):
     def can_handle(
         self,
@@ -28,8 +27,8 @@ class PizzaSizeHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage,
-        messenger,
+        storage: Storage,
+        messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]
         callback_data = update["callback_query"]["data"]

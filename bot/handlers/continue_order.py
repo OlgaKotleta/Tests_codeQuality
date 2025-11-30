@@ -4,7 +4,6 @@ from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
 
-
 class ContinueOrderHandler(Handler):
     def can_handle(
         self,
@@ -28,7 +27,7 @@ class ContinueOrderHandler(Handler):
         update: dict,
         state: str,
         order_json: dict,
-        storage:Storage,
+        storage: Storage,
         messenger: Messenger,
     ) -> HandlerStatus:
         telegram_id = update["callback_query"]["from"]["id"]

@@ -4,7 +4,6 @@ from bot.domain.storage import Storage
 from bot.domain.messenger import Messenger
 
 
-
 class DrinkSelectionHandler(Handler):
     def can_handle(
         self,
