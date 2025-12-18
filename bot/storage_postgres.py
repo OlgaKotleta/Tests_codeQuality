@@ -6,14 +6,14 @@ import time
 import asyncpg
 from dotenv import load_dotenv
 
-from bot.domain.storage import Storage
+#from bot.domain.storage import Storage
 
 load_dotenv()
 
 db_logger = logging.getLogger("DB")
 
 
-class StoragePostgres(Storage):
+class StoragePostgres():
     def __init__(self) -> None:
         self._pool: asyncpg.Pool | None = None
 
