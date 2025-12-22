@@ -23,7 +23,6 @@ async def echo_photo_handler(message: Message, bot: Bot):
     await bot.send_photo(
         chat_id=message.chat.id,
         photo=photo.file_id,
-        caption=f"Отправляю вам ваше фото!"
     )
 
 @dispatcher.update.outer_middleware()
